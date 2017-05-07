@@ -30,17 +30,17 @@ some profound text here ;)
 
 ### Commands
 
-`dev` command configured in `package.json` to "hot" compile all `/lib` directory [Babel](https://babeljs.io) files to the `/build` directory when changes are made and saved
-
 ```bash
 npm run dev
 ```
 
-`build` command configured in `package.json` to compile the `/lib` directory to `/build` **without** "hot" compiling
+`dev` command configured in `package.json` to "hot" compile all `/lib` directory [Babel](https://babeljs.io) files to the `/build` directory when changes are made and saved
 
 ```bash
 npm run build
 ```
+
+`build` command configured in `package.json` to compile the `/lib` directory to `/build` **without** "hot" compiling
 
 ### Development Environment <sub>6 May 2017</sub>
 
