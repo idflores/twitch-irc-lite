@@ -1,0 +1,19 @@
+{
+  "name": "twitch-irc",
+  "version": "0.0.0",
+  "description": "IRC library specifically for Twitch.tv",
+  "main": "irc.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/idflores/twitch-irc.git"
+  },
+  "author": "Israel Flores",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/idflores/twitch-irc/issues"
+  },
+  "homepage": "https://github.com/idflores/twitch-irc#readme"
+}
