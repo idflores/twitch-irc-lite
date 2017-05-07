@@ -28,6 +28,20 @@ some profound text here ;)
 
 <h2 align="center">Personal Notes</h2>
 
+### Commands
+
+`dev` command configured in `package.json` to "hot" compile all `/lib` directory [Babel](https://babeljs.io) files to the `/build` directory when changes are made and saved
+
+```bash
+npm run dev
+```
+
+`build` command configured in `package.json` to compile the `/lib` directory to `/build` **without** "hot" compiling
+
+```bash
+npm run build
+```
+
 ### Development Environment <sub>6 May 2017</sub>
 
 + [Atom.io](https://atom.io) v1.16.0
