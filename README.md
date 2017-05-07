@@ -25,3 +25,14 @@ npm install --save twitch-irc
 <h2 align="center">Usage</h2>
 
 some profound text here ;)
+
+<h2 align="center">Personal Notes</h2>
+
+### Development Environment <sub>6 May 2017</sub>
+
++ [Atom.io](https://atom.io) v1.16.0
++ [Babel](https://babeljs.io)
+  + [bable-cli](https://github.com/babel/babel/tree/master/packages/babel-cli) v6.24.1
+  + [babel-core](https://github.com/babel/babel/tree/master/packages/babel-core) v6.24.1
+  + [babel-preset-env](https://github.com/babel/babel-preset-env) v1.4.0
++ [Node.js](https://nodejs.org) v6.10.2
