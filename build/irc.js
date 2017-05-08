@@ -11,6 +11,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                                                                                                                                                           
                                                                                                                                                           File Name: irc.js
                                                                                                                                                           
+                                                                                                                                                          Purpose: defines the main IRC class and functionality
+                                                                                                                                                          
                                                                                                                                                           **Code.written() with <3 in Babel**
                                                                                                                                                           
                                                                                                                                                           
