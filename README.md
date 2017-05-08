@@ -14,7 +14,7 @@ To stay modular, this package will have **no** dependencies except for [`node.js
 
 In addition, this package aims only to provide communication between Twitch servers and your application following the "Chat and IRC" development guidelines listed on [dev.twitch.tv](https://dev.twitch.tv/docs/v5/guides/irc/). No automatic twitch commands or similar will be implemented here. That's a job for your bot ;)
 
-It should also be said, again, that this IRC package is meant specifically for [Twitch.tv](https://www.twitch.tv). If you try to use this package for other IRC applications, *you do so at your own risk*. You've been warned. :P
+It should also be said, again, that this IRC package is meant specifically for [Twitch.tv](https://www.twitch.tv) using the [IRC Protocol (RCF1459)](https://tools.ietf.org/html/rfc1459.html) as defined by the [Twitch Development Site](https://dev.twitch.tv/docs/v5/guides/irc/). If you try to use this package for other IRC applications, *you do so at your own risk*. You've been warned. :P
 
 <h2 align="center">Install <sub>(under construction)</sub></h2>
 
@@ -26,7 +26,15 @@ npm install --save twitch-irc
 
 some profound text here ;)
 
-<h2 align="center">Personal Notes</h2>
+<!-- <h2 align="center">Contributions</h2>
+
+The beauty of the open source community is that others can contribute works such as this.
+
+I do have a few rules, however:
+
++ **All** code must be commented. If you pull request uncommented code, it's automatically turned down :( -->
+
+<h2 align="center">Development Notes</h2>
 
 ### Commands
 
