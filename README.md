@@ -22,7 +22,7 @@ It should also be said, again, that this IRC package is meant specifically for [
 npm install --save twitch-irc
 ```
 
-<h2 align="center">Usage</h2>
+<h2 align="center">Usage <sub>(under construction)</sub></h2>
 
 some profound text here ;)
 
