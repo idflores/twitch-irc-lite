@@ -4,6 +4,14 @@ var _net = require('net');
 
 var _net2 = _interopRequireDefault(_net);
 
+var _clone = require('./clone.js');
+
+var _clone2 = _interopRequireDefault(_clone);
+
+var _msg = require('./msg.js');
+
+var _msg2 = _interopRequireDefault(_msg);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } } /*
@@ -36,9 +44,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 // calls the node.js `net` library for TCP/IP communication
 
-
-// calls the node.js `EventEmitter` library to support emitted events from `net`
-//import Event from 'events'
 
 // @personal-note:
 //  Using module.exports to make the class publicly available following:
@@ -114,6 +119,8 @@ function IRC(oauth, username) {
     console.log('You have disconnected.');
   });
 } // END Constructor
+
+
 ; // END Class
 
 
@@ -122,11 +129,109 @@ function IRC(oauth, username) {
   @function: serverResponse(message)
   @description: handles responses from the Twitch Server
 
-    @param: message
+    @param: rawData
     @description: the data `Buffer` object given by the `net` Socket
                   instantiated in the IRC constructor
+
+  Notes: Great resource when developing the parsing algorithm
+          String: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
+          RegExp: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp
 */
-function serverResponse(message) {
-  // @TODO: handle server responses
-  console.log(message.toString());
+function serverResponse(rawData) {
+  /*
+    Schema: the `Buffer` given by the `Socket` can carry multiple lines of
+            data. The following code is structured into the following manner:
+               `rawData` is the `String` representation of the `Buffer` data
+              recieved from the server. It is split into a `data` array
+               `data` is an array of `msg` objects
+               `msg` is excately *one* line recieved from the Twitch server
+              and includes parsed details
+             The process models the following:
+               (1) rawData >> data : separate the rawData into actual lines
+                                    recieved from the server and store them
+                                    as an array of lines called `data`
+               (2) data >> msg : each line (or `data` index) is then parsed
+                                (or decoded) to become a `msg` object
+  */
+
+  // make sure the message is a `String` and not a `Buffer` object
+  rawData = rawData.toString();
+
+  /*
+    @array: data
+    @description: an array of each line of `rawData`
+  */
+  var data = [];
+
+  /*
+    @object: msg
+    @description: a prototype to maintain the evaluated details
+                  of one line of parsed `rawData`
+       @property: raw
+      @description: `String` of *one* line recieved from the server
+       @property: header
+      @description: anything that is recieved before the hostName
+       @property: hostName
+      @description: in every recieved message, the host name will ALWAYS be
+                    included. We're using it as the anchor to how we parse
+                    the recieved message
+       @property: status
+      @description: HTTP status code if any are applicable
+       @property: message
+      @description: the parsed information recieved by the server
+  */
+  var msg = {
+    raw: null,
+    header: null,
+    hostName: null,
+    status: null,
+    message: null
+  };
+
+  // copy the `rawData` so we can manipulate it and still keep the original
+  var temp = rawData;
+  // initialize an index to track our `temp` evaluation
+  var endIndex = null;
+  // initialize the `RegExp` for the host name anchor
+  var hostExp = new RegExp(/:[\w.]*\.twitch\.tv/);
+  // initialize an index to track the `hostName`
+  var hostIndex = null;
+
+  // Loop: splits 'rawData' into single lines of code and parses them
+  for (var i = 0; temp.search(/\r\n/) !== -1; i++) {
+
+    // SPLIT //
+    // Note: could have used String.split(), but with little advantage
+
+    // Searches for every instance of the `\r\n` line delimitter
+    endIndex = temp.search(/\r\n/);
+    // When found it `Clone`s a new `msg` Object into the `data` array
+    data[i] = new _clone2.default(msg);
+    //  A single line of `rawData` is stored in `raw` for evaluation
+    data[i].raw = temp.substring(0, endIndex);
+    temp = temp.substring(endIndex + 2);
+
+    // PARSE //
+
+    // msg.hostName:
+    // get the `hostName` from the `raw` server response
+    // TODO: try/catch, throw error/warning if hostname does not exist
+    data[i].hostName = data[i].raw.match(hostExp).toString();
+    hostIndex = data[i].raw.search(hostExp);
+
+    // msg.header:
+    // get the header (the portion before the `hostName`), if it exists
+    // it carries usernames, channel names, etc.
+    if (hostIndex !== 0) {
+      data[i].header = data[i].raw.substring(0, hostIndex);
+    }
+
+    // msg.status
+    // get and handle the HTTP status code if it exists
+  }
+  console.log(data);
+  //
+  //
+  // msg.message = rawData.substring(hostIndex + msg.hostName.length)
+  // console.log(msg)
 }

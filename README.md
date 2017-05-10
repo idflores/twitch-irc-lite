@@ -36,6 +36,12 @@ I do have a few rules, however:
 
 <h2 align="center">Development Notes</h2>
 
+### File Structure & Design
+
+`/lib` is the main development library. It's written in [Babel](https://babeljs.io).
+
+`/build` is the compiled and minified JavaScript library for your use.
+
 ### Commands
 
 ```bash
