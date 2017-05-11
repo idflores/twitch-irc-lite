@@ -40,7 +40,7 @@ I do have a few rules, however:
 
 `/lib` is the main development library. It's written in [Babel](https://babeljs.io).
 
-`/build` is the compiled and minified JavaScript library for your use.
+`/build` is the compiled and minified JavaScript library for general use.
 
 ### Commands
 

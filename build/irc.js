@@ -60,7 +60,7 @@ module.exports = function () {
       @description: pass `true` if you desire to view _everything_ the Twitch
                     IRC server responds in the console;
                     `false` will cause only chat messages to output to
-                    the console
+                    the console IF `console_out` is set to `true`
   */
   function IRC(oauth, username) {
     var debug_mode = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
@@ -98,7 +98,7 @@ module.exports = function () {
     // @description: listens for `data` event emitted by the `net` Socket
     //               and outputs the data recieved from the Socket buffer
     client.addListener('data', function (message) {
-      if (debug_mode) console.log(message.toString());else serverResponse(message, history, client);
+      serverResponse(message, history, client, debug_mode);
     });
 
     // @listener: 'error'
@@ -109,8 +109,7 @@ module.exports = function () {
       if (debug_mode) {
         console.log('Failed connection');
         console.log(exception.toString());
-      } else console.log('ERROR: Connection failed. Check your username \
-                       and password');
+      } else console.log('ERROR: Check your username and password');
     });
 
     // @listener: 'end'
@@ -194,7 +193,7 @@ module.exports = function () {
          String: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
          RegExp: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp
 */
-function serverResponse(rawData, history, client) {
+function serverResponse(rawData, history, client, debug_mode) {
   /*
     Schema: the `Buffer` given by the `Socket` can carry multiple lines of
             data. The following code is structured into the following manner:
@@ -227,6 +226,7 @@ function serverResponse(rawData, history, client) {
     var channelIndex = null;
     var spaceIndex = null;
     var hostIndex = null;
+    var metaIndex = null;
 
     // SPLIT //
 
@@ -272,6 +272,14 @@ function serverResponse(rawData, history, client) {
         // get `Msg.meta_host`
         if (hostIndex - colonIndex !== 1) {
           history[index].meta_host = temp.substring(colonIndex + 1, hostIndex - 1);
+
+          // check the formating of `meta_host`
+          // sometimes it's `<user>!<user>@<user>`
+          if (history[index].meta_host.search(/\!/) !== -1) {
+            metaIndex = history[index].meta_host.search(/\!/);
+            history[index].meta_host = history[index].meta_host.substring(colonIndex, metaIndex);
+          }
+
           temp = temp.substring(hostIndex - 1);
           hostIndex = 1;
         }
@@ -321,7 +329,7 @@ function serverResponse(rawData, history, client) {
         if (temp !== null) {
           history[index].tag = temp;
         }
-      }
+      } // END 'tmi.twitch.tv' IF
 
       // handle `jtv` messages
       else if (history[index].raw.search(jtvExp) !== -1) {
@@ -347,6 +355,13 @@ function serverResponse(rawData, history, client) {
       continue;
     } // END try/catch
 
-    // console.log(history[index])
+
+    // LIVE CONSOLE OUTPUT //
+
+    if (debug_mode) {
+      console.log(history[index]);
+    } else {
+      console.log(history[index].message);
+    }
   } // END WHILE
 } // END serverResponse()

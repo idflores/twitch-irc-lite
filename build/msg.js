@@ -42,12 +42,10 @@ along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
     @description: anything that is recieved before the hostName
 
     @property: meta_host
-    @description: the header to the `host` usually carrying information
-                  about the connected user using the following schemas:
-
-                    :<user>!<user>@<user>.host
-                    - or -
-                    :<user>.host
+    @description: the header to the `host` carrying the name of the user
+                  calling the server
+                  useful especially in `PRIVMSG` since it designates who the
+                  `PRIVMSG` is **from**
 
     @property: host
     @description: in every recieved message, the host name will ALWAYS be
@@ -58,7 +56,7 @@ along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
     @description: HTTP status code if any are applicable
 
     @property: user
-    @description: carries the user the server is addressing in the message
+    @description: carries the user the **server** is addressing NOT a user
 
     @property: tag
     @description: when a command is sent to the server, the server will
@@ -87,17 +85,17 @@ module.exports =
   @description: intializes all properties of the Msg object
 */
 function Msg() {
-  _classCallCheck(this, Msg);
+              _classCallCheck(this, Msg);
 
-  this.raw;
-  this.meta;
-  this.meta_host;
-  this.host;
-  this.status;
-  this.user;
-  this.tag;
-  this.channel;
-  this.message;
-  this.jtv_action;
-  this.error;
+              this.raw;
+              this.meta;
+              this.meta_host;
+              this.host;
+              this.status;
+              this.user;
+              this.tag;
+              this.channel;
+              this.message;
+              this.jtv_action;
+              this.error;
 };
