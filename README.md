@@ -22,9 +22,71 @@ It should also be said, again, that this IRC package is meant specifically for [
 npm install --save twitch-irc
 ```
 
-<h2 align="center">Usage <sub>(under construction)</sub></h2>
+<h2 align="center">Usage</h2>
 
-some profound text here ;)
+### Connect to Twitch
+
+```JavaScript
+var myChatBot = new IRC('<oauth>', '<your_username>');
+/*
+ Example:
+ var myChatBot = new IRC('oauth:example23ewuojv309ujfexample', 'myusername');
+*/
+```
+*Note: You can get your `oauth` key here: [Twitch Authentication Docs](https://dev.twitch.tv/docs/v5/guides/authentication/)*
+
+### Join a Channel
+
+```JavaScript
+myChatBot.join('<channel_name>');
+```
+*Note: Twitch-IRC supports joining multiple channels concurrently*
+
+### Send a Chat Message
+
+```JavaScript
+myChatBot.chat('<your_message_here>', '<channel_name>');
+
+/*
+  DEFAULT: <channel_name> = null
+    if <channel_name> is omitted, chat() will default to the last channel joined
+*/
+myChatBot.chat('<your_message_here>');
+```
+
+### Get List of Joined channels
+
+```JavaScript
+myChatBot.getChannels()
+```
+
+### Leave a Channel
+
+```JavaScript
+myChatBot.leave('<channel_name>');
+
+/*
+  DEFAULT: <channel_name> = null
+    if <channel_name> is omitted, leave() will default to the last channel joined
+*/
+myChatBot.leave('<channel_name>');
+```
+
+### Get *Live* Chat Messages
+
+```JavaScript
+myChatBot.chatEvents.addListener('message', function(channel, from, message){
+
+  /* your code here
+
+      *channel*  String of the current channel
+      *from*     String of the sending username
+      *message*  String of the chat message received
+
+     your code here */
+
+});
+```
 
 <!-- <h2 align="center">Contributions</h2>
 

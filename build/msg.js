@@ -31,6 +31,18 @@ along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
+  Twitch IRC Server Response Schema
+  @descriptoin: based on the host, the Twitch IRC server will respond in the
+                following organization
+
+  Host: tmi.twitch.tv
+  <meta> :<meta_host>.<host> <status> <user> <tag> #<channel> :<message>
+
+  Host: jtv
+  :<host> <tag> #<channel> <jtv_action> <user>
+*/
+
+/*
   @object: msg
   @description: a prototype to maintain the evaluated details
                 of one line of parsed `rawData`

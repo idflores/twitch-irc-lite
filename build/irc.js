@@ -39,6 +39,10 @@ var _msg = require('./msg.js');
 
 var _msg2 = _interopRequireDefault(_msg);
 
+var _events = require('events');
+
+var _events2 = _interopRequireDefault(_events);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -70,11 +74,17 @@ module.exports = function () {
     // initialize an array property to keep a server response history
     var history = this.history = [];
 
+    // initialize channel
+    var channel = this.channel = null;
+
     // establish a connection Socket to the Twitch IRC server
     var client = this.client = _net2.default.connect(6667, 'irc.chat.twitch.tv');
     // sets the output protocol for the 'net' Socket buffer that holds data
     // whenever the Twitch server responds
     client.setEncoding('utf8');
+
+    // EVENTS //
+    var chatEvents = this.chatEvents = new _events2.default();
 
     // LISTENERS //
 
@@ -98,7 +108,7 @@ module.exports = function () {
     // @description: listens for `data` event emitted by the `net` Socket
     //               and outputs the data recieved from the Socket buffer
     client.addListener('data', function (message) {
-      serverResponse(message, history, client, debug_mode);
+      serverResponse(message, history, client, debug_mode, chatEvents);
     });
 
     // @listener: 'error'
@@ -131,8 +141,143 @@ module.exports = function () {
   _createClass(IRC, [{
     key: 'join',
     value: function join(channel) {
-      this.client.write('JOIN #' + channel + '\r\n');
+      // make sure the channel has not been joined already
+      try {
+        if (this.channel.includes(channel)) {
+          throw "ERROR: Channel already joined";
+        } else {
+          this.channel.push(channel);
+        }
+
+        var history = this.history;
+        var client = this.client;
+
+        // retry connection every 0.5 seconds
+        var attemptID = setInterval(function () {
+          console.log('Joining ' + channel + '...');
+          client.write('JOIN #' + channel.toLowerCase() + '\r\n');
+        }, 500);
+
+        // check to see if the channel has been joined
+        var monitorID = setInterval(function () {
+          // twitch sends 3 messages in succession when joining a channel
+          // it's best to check the 3rd to last for stability
+          var lastIndex = history.length - 3;
+          if (history[lastIndex].tag === 'JOIN') {
+            console.log('You have joined ' + channel + '!');
+            clearInterval(attemptID);
+            clearInterval(monitorID);
+            clearInterval(_timerID);
+          }
+        }, 20);
+
+        // make sure we don't try to join forever ;)
+        var _timerID = setInterval(function () {
+          throw "ERROR: Cannot join " + channel;
+        }, 3000);
+      } // END TRY
+
+      catch (e) {
+        console.log(e);
+      } // END CATCH
     } // END join()
+
+    /*
+      @function: chat()
+      @description: sends a message to the Twitch server on the current channel
+         @param: message
+        @description: the message to be sent
+         @param: channel
+        @default: null
+        @description: can specify a channel to chat
+                      must be a channel already joined
+                      if `null` will default to the last channel joined
+    */
+
+  }, {
+    key: 'chat',
+    value: function chat(message) {
+      var channel = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+
+      try {
+        // default, send to last channel joined
+        if (channel === null) {
+          var lastIndex = this.channel.length - 1;
+          if (lastIndex === -1) {
+            throw "ERROR: You must join a channel first";
+          }
+          this.client.write('PRIVMSG #' + this.channel[lastIndex].toLowerCase() + ' :' + message + '\r\n');
+        }
+
+        // send to specified channel
+        else {
+            if (this.channel.includes(channel)) {
+              this.client.write('PRIVMSG #' + channel.toLowerCase() + ' :' + message + '\r\n');
+            } else {
+              throw "ERROR: You must chat a channel that has already been joined";
+            }
+          } // END IF
+      } // END TRY
+
+      catch (e) {
+        console.log(e);
+      } // END CATCH
+    } // END chat()
+
+    /*
+      @function: leave()
+      @description: leaves a joined channel
+         @param: channel
+        @default: null
+        @description: can specify a channel to leave
+                      must be a channel already joined
+                      if `null` will default to the last channel joined
+    */
+
+  }, {
+    key: 'leave',
+    value: function leave() {
+      var channel = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+
+      try {
+        // default, leave last channel joined
+        if (channel === null) {
+          var lastIndex = this.channel.length - 1;
+          if (lastIndex === -1) {
+            throw "ERROR: You have not joined a channel yet";
+          }
+          this.client.write('PART #' + this.channel[lastIndex].toLowerCase() + '\r\n');
+          console.log('You left ' + this.channel[lastIndex]);
+          this.channel.pop();
+        }
+
+        // leave specified channel
+        else {
+            if (this.channel.includes(channel)) {
+              this.client.write('PART #' + channel.toLowerCase() + '\r\n');
+              console.log('You left ' + channel);
+              this.channel.splice(this.channel.indexOf(channel), 1);
+            } else {
+              throw "ERROR: You have not joined that channel";
+            }
+          } // END IF
+      } // END try
+
+      catch (e) {
+        console.log(e);
+      } // END CATCH
+    } // END leave()
+
+    /*
+      @function: getChannels()
+      @description: wrapper to return the list of current channels joined
+    */
+
+  }, {
+    key: 'getChannels',
+    value: function getChannels() {
+      return this.channels;
+    }
 
     /*
       @function: getHistory()
@@ -193,7 +338,7 @@ module.exports = function () {
          String: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
          RegExp: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp
 */
-function serverResponse(rawData, history, client, debug_mode) {
+function serverResponse(rawData, history, client, debug_mode, chatEvents) {
   /*
     Schema: the `Buffer` given by the `Socket` can carry multiple lines of
             data. The following code is structured into the following manner:
@@ -233,6 +378,9 @@ function serverResponse(rawData, history, client, debug_mode) {
     // Searches for the first instance of the `\r\n` line delimitter and
     // and stores a single line recieved from the server in `Msg.raw`
     endIndex = rawData.search(/\r\n/);
+
+    // Keep only 200 server messages
+    if (history.length > 200) history.shift();
     history.push(new _msg2.default());
 
     var index = history.length - 1;
@@ -345,7 +493,7 @@ function serverResponse(rawData, history, client, debug_mode) {
         }
 
         // currently, no support for other Twitch IRC server hosts
-        // ...if they exists.
+        // ...if they exist
         else {
             throw "ERROR: Cannot identify the host!";
           }
@@ -361,7 +509,20 @@ function serverResponse(rawData, history, client, debug_mode) {
     if (debug_mode) {
       console.log(history[index]);
     } else {
-      console.log(history[index].message);
+      if (history[index].tag === 'PRIVMSG') {
+        console.log('\n' + '[' + history[index].channel + '] ' + history[index].meta_host + ': ' + history[index].message);
+      }
     }
+
+    // LIVE MESSAGE OUTPUT //
+
+    /*
+      @call: EventEmitter.emit(<event_name>, <arg_1>, ..., <arg_N>)
+        @event_name: 'message'
+        @<arg_1>: current channel
+        @<arg_2>: who the message is from
+        @<arg_3>: the message itself
+    */
+    chatEvents.emit('message', history[index].channel, history[index].meta_host, history[index].message);
   } // END WHILE
 } // END serverResponse()
