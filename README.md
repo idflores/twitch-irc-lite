@@ -24,7 +24,7 @@ Twitch-IRC-Lite is a **_simple_**, **_lightweight_** Twitch IRC package,
 
 Most useful of all, Twitch-IRC-Lite returns already parsed `Object` representations of **all** Twitch server responses!
 
-<h2 align="center">Install <sub>(under construction)</sub></h2>
+<h2 align="center">Install</h2>
 
 ```bash
 npm install --save twitch-irc-lite
