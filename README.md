@@ -177,13 +177,14 @@ npm run build
 
 `build` command configured in `package.json` to compile the `/lib` directory to `/build` **without** "hot" compiling
 
-### Development Environment <sub>6 May 2017</sub>
+### Personal Development Environment <sub>12 May 2017</sub>
 
 + [Atom.io](https://atom.io) v1.16.0
 + [Babel](https://babeljs.io)
   + [bable-cli](https://github.com/babel/babel/tree/master/packages/babel-cli) v6.24.1
   + [babel-core](https://github.com/babel/babel/tree/master/packages/babel-core) v6.24.1
   + [babel-preset-env](https://github.com/babel/babel-preset-env) v1.4.0
+  + [babili](https://github.com/babel/babili) v0.0.12
 + [Node.js](https://nodejs.org) v6.10.2
 
 <h2 align="center">Future Development</h2>
