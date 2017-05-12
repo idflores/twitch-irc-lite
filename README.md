@@ -33,6 +33,9 @@ npm install --save twitch-irc-lite
 <h2 align="center">Getting Started</h2>
 
 ```JavaScript
+// include the npm library
+var IRC = require('twitch-irc-lite')
+
 // connect to Twitch
 var myChatBot = new IRC('oauth:samplew49fu0sve908gjsample', 'aGreatUserName')
 
