@@ -1,18 +1,18 @@
 {
-  "name": "twitch-irc",
-  "version": "0.0.0",
+  "name": "twitch-irc-lite",
+  "version": "1.0.0",
   "description": "IRC library specifically for Twitch.tv",
-  "main": "irc.js",
+  "main": "build/irc.js",
   "scripts": {
-    "build": "babel lib --out-dir build --ignore clone.js",
-    "dev": "babel lib --watch --out-dir build --ignore clone.js",
+    "build": "babel src --out-dir build --ignore clone.js",
+    "dev": "babel src --watch --out-dir build --ignore clone.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/idflores/twitch-irc.git"
   },
-  "author": "Israel Flores",
+  "author": "Israel Flores <idflorespro@gmail.com> (https://github.com/idflores)",
   "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/idflores/twitch-irc/issues"
@@ -21,6 +21,7 @@
   "devDependencies": {
     "babel-cli": "^6.24.1",
     "babel-core": "^6.24.1",
-    "babel-preset-env": "^1.4.0"
+    "babel-preset-env": "^1.4.0",
+    "babili": "0.0.12"
   }
 }

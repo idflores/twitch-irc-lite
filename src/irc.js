@@ -55,11 +55,20 @@ module.exports = class IRC {
   */
   constructor(oauth, username, debug_mode = false) {
 
+    // initialize properties from parameters
+    this.oauth = oauth
+    this.username = username
+    this.debug_mode = debug_mode
+
     // initialize an array property to keep a server response history
     let history = this.history = []
 
     // initialize channel
-    let channel = this.channel = null
+    let channel = this.channel = []
+
+    // initialize variable for state of Socket connection to Twitch
+    let clientState = this.clientState = new Object()
+    this.clientState.state = false
 
     // establish a connection Socket to the Twitch IRC server
     let client = this.client = Net.connect(6667, 'irc.chat.twitch.tv')
@@ -87,6 +96,8 @@ module.exports = class IRC {
         console.log(client.address())
       }
       else console.log('You\'re connected!')
+
+      clientState.state = true
     })
 
     // @listener: 'data'
@@ -100,18 +111,20 @@ module.exports = class IRC {
     // @description: listening for failed connection attempt and any other
     //               errors emitted by the `net` Socket
     client.addListener('error', function(exception) {
-
       if (debug_mode) {
-        console.log('Failed connection')
+        console.log('ERROR with Twitch server')
         console.log(exception.toString())
       }
       else console.log('ERROR: Check your username and password')
+
+      clientState.state = false
     })
 
     // @listener: 'end'
     // @description: listening for the `end` event from the `net` Socket
     //               when the Twitch server has disconnected
     client.addListener('end', function() {
+      clientState.state = false
       console.log('You have disconnected.')
     })
   } // END Constructor
@@ -124,41 +137,70 @@ module.exports = class IRC {
       @description: takes the channel name desired
   */
   join(channel) {
+    let debug_mode = this.debug_mode
+    let this_channel = this.channel
+
+    // checks to make sure `Socket` is connected to Twitch before moving on
+    try {
+      if (this.clientState.state === false) {
+        throw 'ERROR'
+      }
+    }
+    catch(e) {
+      setTimeout(() => this.join(channel), 1000)
+      return
+    }
+
     // make sure the channel has not been joined already
     try {
       if (this.channel.includes(channel)) {
         throw "ERROR: Channel already joined"
-      }
-      else {
-        this.channel.push(channel)
-      }
+      } // END IF
+
+      console.log('Joining ' + channel + '...')
 
       let history = this.history
       let client = this.client
 
       // retry connection every 0.5 seconds
       let attemptID = setInterval( function() {
-          console.log('Joining ' + channel + '...')
           client.write('JOIN #' + channel.toLowerCase() + '\r\n')
-      }, 500)
+      }, 500) // END setInterval()
 
       // check to see if the channel has been joined
       let monitorID = setInterval( function() {
         // twitch sends 3 messages in succession when joining a channel
         // it's best to check the 3rd to last for stability
         let lastIndex = history.length - 3
-        if (history[lastIndex].tag === 'JOIN') {
-          console.log('You have joined ' + channel + '!')
-          clearInterval(attemptID)
-          clearInterval(monitorID)
-          clearInterval(timerID)
-        }
-      }, 20)
+
+        // Sometimes, history takes a moment to instantiate
+        // Try/Catch quiets that exception and increases stability
+        try {
+          if (history[lastIndex].tag === 'JOIN') {
+            console.log('You have joined ' + channel + '!')
+            clearInterval(attemptID)
+            clearInterval(monitorID)
+            clearTimeout(timerID)
+            this_channel.push(channel)
+          }
+        } // END TRY
+
+        catch(e) {
+          if (debug_mode) {
+            console.log('WARNING: failed to join ' + channel +
+                        '. Trying again...')
+          }
+        } // END CATCH
+
+      }, 20) // END setInterval()
 
       // make sure we don't try to join forever ;)
-      let timerID = setInterval( function() {
-        throw ("ERROR: Cannot join " + channel)
-      }, 3000)
+      let timerID = setTimeout( function() {
+        console.log("ERROR: Cannot join " + channel +
+                    ". Check your spelling...")
+        clearInterval(attemptID)
+        clearInterval(monitorID)
+      }, 5000)
 
     } // END TRY
 
@@ -191,6 +233,15 @@ module.exports = class IRC {
         this.client.write('PRIVMSG #' +
                           this.channel[lastIndex].toLowerCase() +
                           ' :' + message + '\r\n')
+        // Twitch does not echo chat messsages from a client
+        // add this message to the history
+        let newChat = new Msg()
+        newChat.meta_host = this.username
+        newChat.host = 'tmi.twitch.tv'
+        newChat.tag = 'PRIVMSG'
+        newChat.channel = this.channel[lastIndex]
+        newChat.message = messsage
+        this.history.push(newChat)
       }
 
       // send to specified channel
@@ -198,6 +249,15 @@ module.exports = class IRC {
         if (this.channel.includes(channel)) {
           this.client.write('PRIVMSG #' + channel.toLowerCase() +
                             ' :' + message + '\r\n')
+          // Twitch does not echo chat messsages from a client
+          // add this message to the history
+          let newChat = new Msg()
+          newChat.meta_host = this.username
+          newChat.host = 'tmi.twitch.tv'
+          newChat.tag = 'PRIVMSG'
+          newChat.channel = channel
+          newChat.message = messsage
+          this.history.push(newChat)
         }
         else {
           throw "ERROR: You must chat a channel that has already been joined"
@@ -227,7 +287,8 @@ module.exports = class IRC {
       if (channel === null) {
         let lastIndex = this.channel.length - 1
         if (lastIndex === -1) {
-          throw "ERROR: You have not joined a channel yet"
+          throw "ERROR: You called \"leave()\"." +
+                " You have not joined a channel yet"
         }
         this.client.write('PART #' + this.channel[lastIndex].toLowerCase() +
                           '\r\n')
@@ -243,7 +304,8 @@ module.exports = class IRC {
           this.channel.splice(this.channel.indexOf(channel), 1)
         }
         else {
-          throw "ERROR: You have not joined that channel"
+          throw "ERROR: Cannot leave" + channel +
+                ". You have not joined that channel yet."
         }
       } // END IF
     } // END try
@@ -257,34 +319,65 @@ module.exports = class IRC {
   /*
     @function: getChannels()
     @description: wrapper to return the list of current channels joined
+
+    @return: this.channel
+    @description: returns the array of all currently joined channels
   */
   getChannels() {
-    return this.channels
+    if (this.channel.length === 0) {
+      console.log('Channel List: <no joined channels>')
+    }
+    else {
+      console.log('Channel List: ' + this.channel)
+    }
+    return this.channel
   }
 
   /*
-    @function: getHistory()
+    @function: getChatHistory()
     @description: returns history of all server messages
 
-    // TODO: getChatHistory()
-    Note: use getChatHistory() for outputing only a chat message log
-  */
-  getHistory(debug_mode = false) {
+      @param: verbose
+      @default: false
+      @description: is overridden by `debug_mode` from the IRC class
+                    if `true`, will output history object to console
+                    if `false` **AND** `debug_mode` is `false`,
+                      will only output Twitch `PRIVMSG` history to console
 
-    // outputs debug history including each `Msg` object
-    if (this.debug_mode || debug_mode) {
+    @returns: history
+    @description: if `verbose` is set to `true`, returns the `history` array
+                  if `false`, will return an array of only Twitch `PRIVMSG`
+                    including **only** the `channel`, `user`, and the `message`
+                    as a concatenated `String`
+  */
+  getChatHistory(verbose = false) {
+
+    // outputs and returns debug history including each `Msg` object
+    if (this.debug_mode || verbose) {
       console.log(this.history)
+      return this.history
     }
 
-    // outputs only `Msg.messages`
+    // outputs & returns only Twitch `PRIVMSG`
     else {
+      let chatHistory = []
+      console.log('HISTORY=========================')
       for (let i = 0; i < this.history.length; i++) {
-        if (this.history[i].message !== undefined) {
-          console.log(this.history[i].message)
+        if (this.history[i].tag === `PRIVMSG`) {
+          console.log('[' + this.history[i].channel + '] ' +
+                      this.history[i].meta_host + ': ' +
+                      this.history[i].message)
+          let newMsg = '[' + this.history[i].channel + '] ' +
+                       this.history[i].meta_host + ': ' +
+                       this.history[i].message
+          chatHistory.push(newMsg)
         }
-      }
-
+      } // END FOR
+      console.log('END HISTORY=====================')
+      return chatHistory
     } // END IF
+
+
   } // END getHistory()
 
 } // END Class
@@ -495,23 +588,7 @@ function serverResponse(rawData, history, client, debug_mode, chatEvents) {
     } // END try/catch
 
 
-    // LIVE CONSOLE OUTPUT //
-
-    if (debug_mode) {
-      console.log(history[index])
-    }
-
-    else {
-      if (history[index].tag === 'PRIVMSG') {
-          console.log('\n' + '[' +
-                      history[index].channel + '] ' +
-                      history[index].meta_host + ': ' +
-                      history[index].message)
-      }
-    }
-
-
-    // LIVE MESSAGE OUTPUT //
+    // LIVE CONSOLE & CHAT OUTPUT //
 
     /*
       @call: EventEmitter.emit(<event_name>, <arg_1>, ..., <arg_N>)
@@ -520,10 +597,25 @@ function serverResponse(rawData, history, client, debug_mode, chatEvents) {
         @<arg_2>: who the message is from
         @<arg_3>: the message itself
     */
-    chatEvents.emit('message',
-                    history[index].channel,
-                    history[index].meta_host,
-                    history[index].message)
+    // if `debug_mode` is TRUE, emit the current `Msg` object
+    if (debug_mode) {
+      console.log(history[index])
+      chatEvents.emit('message', history[index])
+    }
+
+    // otherwise, only emit the important portions of a PRIVMSG message
+    else {
+      if (history[index].tag === 'PRIVMSG') {
+          console.log('[' + history[index].channel + '] ' +
+                      history[index].meta_host + ': ' +
+                      history[index].message)
+          chatEvents.emit('message',
+                          history[index].channel,
+                          history[index].meta_host,
+                          history[index].message)
+      }
+    } // END IF
+
   } // END WHILE
 
 } // END serverResponse()
