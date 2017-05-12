@@ -1,4 +1,4 @@
-[![Node Version](https://img.shields.io/badge/npm-1.0.0-blue.svg?style=flat-square)]()
+[![Node Version](https://img.shields.io/badge/npm-1.0.1-blue.svg?style=flat-square)](https://www.npmjs.com/package/twitch-irc-lite)
 
 <h1 align="center">Twitch-IRC-Lite</h1>
 
