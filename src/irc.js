@@ -240,7 +240,7 @@ module.exports = class IRC {
         newChat.host = 'tmi.twitch.tv'
         newChat.tag = 'PRIVMSG'
         newChat.channel = this.channel[lastIndex]
-        newChat.message = messsage
+        newChat.message = message
         this.history.push(newChat)
       }
 

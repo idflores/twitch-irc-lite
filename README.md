@@ -1,4 +1,4 @@
-[![Node Version](https://img.shields.io/badge/npm-1.0.2-blue.svg?style=flat-square)](https://www.npmjs.com/package/twitch-irc-lite)
+[![Node Version](https://img.shields.io/badge/npm-1.0.3-blue.svg?style=flat-square)](https://www.npmjs.com/package/twitch-irc-lite)
 
 <h1 align="center">Twitch-IRC-Lite</h1>
 
@@ -31,6 +31,8 @@ npm install --save twitch-irc-lite
 ```
 
 <h2 align="center">Getting Started</h2>
+
+### Basics
 
 ```JavaScript
 // include the npm library
